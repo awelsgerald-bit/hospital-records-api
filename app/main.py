@@ -48,6 +48,11 @@ def ensure_user_role_column() -> None:
     Lightweight startup migration for existing SQLite databases created
     before role-based access control was introduced.
     """
+    # This migration path is only for SQLite.
+    # PostgreSQL deployments should use a proper migration tool (e.g. Alembic).
+    if engine.dialect.name != "sqlite":
+        return
+
     with engine.begin() as conn:
         rows = conn.execute(text("PRAGMA table_info(users)")).mappings().all()
         columns = {row["name"] for row in rows}
