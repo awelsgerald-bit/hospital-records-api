@@ -121,3 +121,43 @@ For protected endpoints, send:
 - If port `8000` is already in use, stop the old process and restart Uvicorn.
 - If requests return `401`, check your token.
 - If requests return `403`, your role does not have access to that endpoint.
+
+## Deploy (Render)
+
+This project is ready to deploy from GitHub.
+
+### 1. Push latest changes
+
+```powershell
+git add .
+git commit -m "Prepare production deployment config"
+git push
+```
+
+### 2. Create a PostgreSQL database
+
+Create a managed PostgreSQL database (Render Postgres, Neon, Supabase, etc.) and copy its connection string.
+
+Expected format examples:
+- `postgresql://user:pass@host:5432/dbname`
+- `postgres://user:pass@host:5432/dbname`
+
+### 3. Create Render Web Service
+
+1. In Render, click **New +** -> **Web Service**
+2. Connect your GitHub repository
+3. Use these settings:
+   - Build Command: `pip install -r requirements.txt`
+   - Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+4. Add environment variables:
+   - `SECRET_KEY` = a long random string
+   - `DATABASE_URL` = your Postgres connection string
+5. Deploy
+
+### 4. Verify after deploy
+
+- Open `https://<your-service>.onrender.com/health`
+- Open `https://<your-service>.onrender.com/docs`
+- Login with `admin / admin123` on first boot
+
+Note: if you redeploy frequently, change the default admin password flow before public sharing.
