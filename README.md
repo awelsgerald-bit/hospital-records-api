@@ -1,54 +1,80 @@
-# Hospital Records API
+# Hospital Records Management API
 
-REST API for managing patients, doctors, appointments, and medical records.
+Production-structured backend project for managing hospital operations: patients, doctors, appointments, and medical history.
 
-Stack:
+## Live Project
+
+- Dashboard: [https://hospital-records-api.onrender.com/](https://hospital-records-api.onrender.com/)
+- API Docs (Swagger): [https://hospital-records-api.onrender.com/docs](https://hospital-records-api.onrender.com/docs)
+- Health Check: [https://hospital-records-api.onrender.com/health](https://hospital-records-api.onrender.com/health)
+
+## Project Highlights
+
+- REST API built with **FastAPI**
+- **JWT authentication** with role-based authorization
+- **SQLAlchemy ORM** data layer
+- Works locally with **SQLite**
+- Deployment-ready with **PostgreSQL** via `DATABASE_URL`
+- Browser dashboard UI for quick API interaction
+
+## Role-Based Access
+
+Supported roles:
+- `admin`
+- `doctor`
+- `receptionist`
+
+Permission model:
+- `admin`: full system access
+- `receptionist`: patient + appointment workflows, doctor assignment
+- `doctor`: clinical workflows and medical records
+
+## Core Features
+
+1. Patient Management
+- Create, list, get by ID, update, delete
+
+2. Doctor Management
+- Create, list, get by ID, update, delete
+- Assign doctor to patient
+
+3. Appointment System
+- Book appointment
+- View and update appointments
+- Cancel or delete appointment
+
+4. Medical Records
+- Add medical records per patient
+- View patient history
+- Update and delete records (role-restricted)
+
+## Tech Stack
+
+- Python
 - FastAPI
-- SQLAlchemy ORM
-- SQLite
-- JWT authentication
+- SQLAlchemy
+- Pydantic
+- SQLite / PostgreSQL
+- Uvicorn
 
-Includes:
-- Role-based access (`admin`, `doctor`, `receptionist`)
-- Swagger docs at `/docs`
-- Lightweight web dashboard at `/`
-
-## Project Layout
+## Repository Structure
 
 ```text
 app/
   core/
-    config.py
-    security.py
   database/
-    db.py
   models/
-    appointment.py
-    doctor.py
-    doctor_patient_assignment.py
-    medical_record.py
-    patient.py
-    user.py
   routes/
-    appointments.py
-    auth.py
-    doctors.py
-    medical_records.py
-    patients.py
   schemas/
-    appointment.py
-    auth.py
-    doctor.py
-    medical_record.py
-    patient.py
   static/
-    index.html
   dependencies.py
   main.py
 requirements.txt
+Procfile
+render.yaml
 ```
 
-## Quick Start (Windows / PowerShell)
+## Local Run
 
 ```powershell
 python -m venv .venv
@@ -57,107 +83,73 @@ python -m pip install -r requirements.txt
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-Open:
+Local URLs:
 - Dashboard: <http://127.0.0.1:8000/>
-- Swagger docs: <http://127.0.0.1:8000/docs>
-- Health check: <http://127.0.0.1:8000/health>
+- Swagger: <http://127.0.0.1:8000/docs>
 
-## Authentication
+## Authentication Quick Start
 
-Default admin (seeded on startup):
+Default seeded admin account:
 - Username: `admin`
 - Password: `admin123`
-- Role: `admin`
 
 Auth endpoints:
-- `POST /auth/login` -> returns JWT
-- `GET /auth/me` -> current authenticated user
-- `POST /auth/register` -> public signup (creates `receptionist`)
-- `POST /auth/users` -> admin-only user creation with explicit role
+- `POST /auth/login`
+- `GET /auth/me`
+- `POST /auth/register` (creates receptionist user)
+- `POST /auth/users` (admin creates user with explicit role)
 
-For protected endpoints, send:
+Use token as:
 `Authorization: Bearer <access_token>`
 
-## Roles and Permissions
+## Sample API Requests
 
-- `admin`
-  - Full access
-  - Can create staff users with roles
-  - Can perform destructive operations
-- `receptionist`
-  - Patient workflows
-  - Appointment workflows
-  - Doctor-patient assignment
-- `doctor`
-  - View patient/doctor/appointment data
-  - Create and update medical records
+1. Login and get JWT token
 
-## Main API Groups
-
-- `/patients`
-- `/doctors`
-- `/appointments`
-- `/medical-records`
-- `/auth`
-
-## Example Workflow
-
-1. Login as admin (`/auth/login`)
-2. Create doctors (`POST /doctors/`)
-3. Create patients (`POST /patients/`)
-4. Assign doctor to patient (`POST /doctors/assign`)
-5. Book appointment (`POST /appointments/`)
-6. Add medical record (`POST /medical-records/`)
-7. Review patient history (`GET /medical-records/patient/{patient_id}`)
-
-## Notes
-
-- Database file is created automatically: `hospital.db`
-- Existing databases are upgraded at startup to include `users.role` if missing
-- If you change auth or schema models, restart the server
-
-## Troubleshooting
-
-- If port `8000` is already in use, stop the old process and restart Uvicorn.
-- If requests return `401`, check your token.
-- If requests return `403`, your role does not have access to that endpoint.
-
-## Deploy (Render)
-
-This project is ready to deploy from GitHub.
-
-### 1. Push latest changes
-
-```powershell
-git add .
-git commit -m "Prepare production deployment config"
-git push
+```bash
+curl -X POST "https://hospital-records-api.onrender.com/auth/login" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=admin&password=admin123"
 ```
 
-### 2. Create a PostgreSQL database
+2. Create a patient (replace `<TOKEN>`)
 
-Create a managed PostgreSQL database (Render Postgres, Neon, Supabase, etc.) and copy its connection string.
+```bash
+curl -X POST "https://hospital-records-api.onrender.com/patients/" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "full_name": "John Carter",
+    "age": 38,
+    "gender": "Male",
+    "phone": "+1-555-001-9988",
+    "address": "12 Lakeview Drive, Seattle"
+  }'
+```
 
-Expected format examples:
-- `postgresql://user:pass@host:5432/dbname`
-- `postgres://user:pass@host:5432/dbname`
+3. Book an appointment (replace `<TOKEN>`)
 
-### 3. Create Render Web Service
+```bash
+curl -X POST "https://hospital-records-api.onrender.com/appointments/" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "patient_id": 1,
+    "doctor_id": 1,
+    "appointment_date": "2026-03-25T10:30:00Z"
+  }'
+```
 
-1. In Render, click **New +** -> **Web Service**
-2. Connect your GitHub repository
-3. Use these settings:
-   - Build Command: `pip install -r requirements.txt`
-   - Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-4. Add environment variables:
-   - `SECRET_KEY` = a long random string
-   - `DATABASE_URL` = your Postgres connection string
-5. Deploy
+## Deployment Notes
 
-### 4. Verify after deploy
+- App uses `DATABASE_URL` in production.
+- SQLite-only migration logic is guarded to avoid PostgreSQL startup errors.
+- `SECRET_KEY` must be set in environment variables for production.
 
-- Open `https://<your-service>.onrender.com/health`
-- Open `https://<your-service>.onrender.com/docs`
-- Login with `admin / admin123` on first boot
+## Why This Project
 
-Note: if you redeploy frequently, change the default admin password flow before public sharing.
+This project demonstrates:
+- API design and clean backend structure
+- Authentication + authorization patterns
+- SQL modeling and relational workflows
+- Deployment readiness and production configuration
