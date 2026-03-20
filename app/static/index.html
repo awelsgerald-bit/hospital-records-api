@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hospital Records Dashboard</title>
+  <style>
+    :root {
+      --bg: #f3f5f7;
+      --panel: #ffffff;
+      --ink: #16202a;
+      --muted: #5c6b78;
+      --brand: #0f766e;
+      --brand-soft: #d8f3ef;
+      --danger: #b42318;
+      --line: #e4e8ec;
+      --radius: 16px;
+      --shadow: 0 10px 30px rgba(13, 33, 53, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Manrope", "SF Pro Text", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 10%, #dff7f2 0%, transparent 40%),
+        radial-gradient(circle at 90% 20%, #e6f0ff 0%, transparent 35%),
+        var(--bg);
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 28px 18px 60px;
+    }
+
+    .hero {
+      background: linear-gradient(120deg, #0f766e, #155e75);
+      color: #fff;
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
+    }
+
+    .hero h1 { margin: 0 0 8px; font-size: 1.6rem; letter-spacing: 0.2px; }
+    .hero p { margin: 0; opacity: 0.92; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .card h2 { margin: 0 0 12px; font-size: 1rem; }
+    .card p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+
+    .span-4 { grid-column: span 4; }
+    .span-6 { grid-column: span 6; }
+    .span-8 { grid-column: span 8; }
+    .span-12 { grid-column: span 12; }
+
+    .row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    input, select, textarea, button {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #cfd7df;
+      font: inherit;
+    }
+
+    textarea { min-height: 88px; resize: vertical; }
+    button {
+      border: 0;
+      background: var(--brand);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 0.1s ease, opacity 0.2s ease;
+    }
+    button:hover { opacity: 0.92; }
+    button:active { transform: translateY(1px); }
+    .ghost { background: #eef3f7; color: #22313f; }
+    .danger { background: var(--danger); }
+
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .chip {
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--brand-soft);
+      color: #0f4e47;
+      border: 1px solid #b8e5dd;
+    }
+
+    .out {
+      margin-top: 10px;
+      border: 1px dashed #c8d1da;
+      border-radius: 12px;
+      padding: 10px;
+      background: #fbfdff;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.8rem;
+      max-height: 300px;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+
+    .status {
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 10px;
+      background: #eef8f6;
+      border: 1px solid #c4e5df;
+      color: #14534e;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 980px) {
+      .span-4, .span-6, .span-8 { grid-column: span 12; }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>Hospital Records Dashboard</h1>
+      <p>Modern admin UI for your FastAPI backend with role-aware JWT access.</p>
+      <div class="chips">
+        <span class="chip">FastAPI</span>
+        <span class="chip">JWT Auth</span>
+        <span class="chip">SQLite</span>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card span-4">
+        <h2>Authentication</h2>
+        <div class="row">
+          <input id="loginUsername" placeholder="Username" value="admin" />
+          <input id="loginPassword" placeholder="Password" type="password" value="admin123" />
+        </div>
+        <button onclick="login()">Login</button>
+        <div class="row" style="margin-top:10px;">
+          <input id="tokenInput" placeholder="Bearer token (auto-filled on login)" />
+          <button class="ghost" onclick="setToken()">Set Token</button>
+        </div>
+        <button class="ghost" onclick="me()" style="margin-top:8px;">Get /auth/me</button>
+        <div class="status" id="authStatus">Not authenticated.</div>
+      </article>
+
+      <article class="card span-8">
+        <h2>Patients</h2>
+        <div class="row">
+          <input id="pName" placeholder="Full name" />
+          <input id="pAge" placeholder="Age" type="number" />
+          <input id="pGender" placeholder="Gender" />
+          <input id="pPhone" placeholder="Phone" />
+          <input id="pAddress" placeholder="Address" style="grid-column: span 2;" />
+        </div>
+        <div class="row">
+          <button onclick="createPatient()">Create</button>
+          <button class="ghost" onclick="listPatients()">Get All</button>
+        </div>
+        <div class="row">
+          <input id="pId" placeholder="Patient ID" type="number" />
+          <button class="ghost" onclick="getPatient()">Get By ID</button>
+          <button class="ghost" onclick="updatePatient()">Update</button>
+          <button class="danger" onclick="deletePatient()">Delete</button>
+        </div>
+      </article>
+
+      <article class="card span-6">
+        <h2>Doctors + Assign</h2>
+        <div class="row">
+          <input id="dName" placeholder="Doctor name" />
+          <input id="dSpec" placeholder="Specialization" />
+          <input id="dContact" placeholder="Contact" />
+          <button onclick="createDoctor()">Create Doctor</button>
+        </div>
+        <div class="row">
+          <button class="ghost" onclick="listDoctors()">Get All Doctors</button>
+          <input id="assignDoctorId" placeholder="Doctor ID" type="number" />
+          <input id="assignPatientId" placeholder="Patient ID" type="number" />
+          <button class="ghost" onclick="assignDoctor()">Assign to Patient</button>
+        </div>
+      </article>
+
+      <article class="card span-6">
+        <h2>Appointments</h2>
+        <div class="row">
+          <input id="aPatientId" placeholder="Patient ID" type="number" />
+          <input id="aDoctorId" placeholder="Doctor ID" type="number" />
+          <input id="aDate" type="datetime-local" />
+          <button onclick="bookAppointment()">Book</button>
+        </div>
+        <div class="row">
+          <button class="ghost" onclick="listAppointments()">View Appointments</button>
+          <input id="aId" placeholder="Appointment ID" type="number" />
+          <button class="ghost" onclick="cancelAppointment()">Cancel</button>
+          <button class="danger" onclick="deleteAppointment()">Delete</button>
+        </div>
+      </article>
+
+      <article class="card span-12">
+        <h2>Medical Records</h2>
+        <div class="row">
+          <input id="mPatientId" placeholder="Patient ID" type="number" />
+          <input id="mDiagnosis" placeholder="Diagnosis" />
+          <textarea id="mTreatment" placeholder="Treatment"></textarea>
+          <button onclick="createRecord()">Add Record</button>
+        </div>
+        <div class="row">
+          <button class="ghost" onclick="listRecords()">Get All Records</button>
+          <input id="mPatientHistoryId" placeholder="Patient ID for History" type="number" />
+          <button class="ghost" onclick="patientHistory()">Patient History</button>
+        </div>
+      </article>
+
+      <article class="card span-12">
+        <h2>Response Console</h2>
+        <p>Shows API request responses and errors.</p>
+        <div class="out" id="out">{ "ready": true }</div>
+      </article>
+    </section>
+  </div>
+
+  <script>
+    let token = localStorage.getItem("jwt_token") || "";
+
+    function out(payload) {
+      document.getElementById("out").textContent =
+        typeof payload === "string" ? payload : JSON.stringify(payload, null, 2);
+    }
+
+    function setStatus(message, good = true) {
+      const el = document.getElementById("authStatus");
+      el.textContent = message;
+      el.style.background = good ? "#eef8f6" : "#fff3f2";
+      el.style.borderColor = good ? "#c4e5df" : "#f2cbc7";
+      el.style.color = good ? "#14534e" : "#9f2d24";
+    }
+
+    async function api(path, options = {}) {
+      const headers = { ...(options.headers || {}) };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      if (!headers["Content-Type"] && options.body && !(options.body instanceof FormData)) {
+        headers["Content-Type"] = "application/json";
+      }
+
+      const res = await fetch(path, { ...options, headers });
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
+      if (!res.ok) {
+        throw new Error(`${res.status} ${res.statusText}: ${JSON.stringify(data)}`);
+      }
+      return data;
+    }
+
+    async function login() {
+      try {
+        const username = document.getElementById("loginUsername").value.trim();
+        const password = document.getElementById("loginPassword").value.trim();
+        const body = new URLSearchParams({ username, password });
+        const res = await fetch("/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(JSON.stringify(data));
+        token = data.access_token;
+        localStorage.setItem("jwt_token", token);
+        document.getElementById("tokenInput").value = token;
+        setStatus("Logged in. Token stored in browser.");
+        out(data);
+      } catch (err) {
+        setStatus("Login failed.", false);
+        out(String(err));
+      }
+    }
+
+    function setToken() {
+      token = document.getElementById("tokenInput").value.trim();
+      localStorage.setItem("jwt_token", token);
+      setStatus(token ? "Token set." : "Token cleared.");
+      out({ token_set: !!token });
+    }
+
+    async function me() { run(() => api("/auth/me")); }
+
+    async function createPatient() {
+      const payload = {
+        full_name: v("pName"),
+        age: Number(v("pAge")),
+        gender: v("pGender"),
+        phone: v("pPhone"),
+        address: v("pAddress")
+      };
+      run(() => api("/patients/", { method: "POST", body: JSON.stringify(payload) }));
+    }
+
+    async function listPatients() { run(() => api("/patients/")); }
+    async function getPatient() { run(() => api(`/patients/${num("pId")}`)); }
+    async function updatePatient() {
+      const payload = {};
+      if (v("pName")) payload.full_name = v("pName");
+      if (v("pAge")) payload.age = Number(v("pAge"));
+      if (v("pGender")) payload.gender = v("pGender");
+      if (v("pPhone")) payload.phone = v("pPhone");
+      if (v("pAddress")) payload.address = v("pAddress");
+      run(() => api(`/patients/${num("pId")}`, { method: "PUT", body: JSON.stringify(payload) }));
+    }
+    async function deletePatient() { run(() => api(`/patients/${num("pId")}`, { method: "DELETE" })); }
+
+    async function createDoctor() {
+      const payload = { name: v("dName"), specialization: v("dSpec"), contact: v("dContact") };
+      run(() => api("/doctors/", { method: "POST", body: JSON.stringify(payload) }));
+    }
+    async function listDoctors() { run(() => api("/doctors/")); }
+    async function assignDoctor() {
+      const payload = { doctor_id: num("assignDoctorId"), patient_id: num("assignPatientId") };
+      run(() => api("/doctors/assign", { method: "POST", body: JSON.stringify(payload) }));
+    }
+
+    async function bookAppointment() {
+      const local = v("aDate");
+      const appointment_date = local ? new Date(local).toISOString() : null;
+      const payload = {
+        patient_id: num("aPatientId"),
+        doctor_id: num("aDoctorId"),
+        appointment_date
+      };
+      run(() => api("/appointments/", { method: "POST", body: JSON.stringify(payload) }));
+    }
+    async function listAppointments() { run(() => api("/appointments/")); }
+    async function cancelAppointment() { run(() => api(`/appointments/${num("aId")}/cancel`, { method: "PATCH" })); }
+    async function deleteAppointment() { run(() => api(`/appointments/${num("aId")}`, { method: "DELETE" })); }
+
+    async function createRecord() {
+      const payload = {
+        patient_id: num("mPatientId"),
+        diagnosis: v("mDiagnosis"),
+        treatment: v("mTreatment")
+      };
+      run(() => api("/medical-records/", { method: "POST", body: JSON.stringify(payload) }));
+    }
+    async function listRecords() { run(() => api("/medical-records/")); }
+    async function patientHistory() { run(() => api(`/medical-records/patient/${num("mPatientHistoryId")}`)); }
+
+    function v(id) { return document.getElementById(id).value.trim(); }
+    function num(id) { return Number(v(id)); }
+    async function run(fn) {
+      try {
+        const data = await fn();
+        out(data);
+      } catch (err) {
+        out(String(err));
+      }
+    }
+
+    if (token) {
+      document.getElementById("tokenInput").value = token;
+      setStatus("Token restored from browser storage.");
+    }
+  </script>
+</body>
+</html>
